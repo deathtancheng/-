@@ -1,0 +1,253 @@
+{
+  "day": 1,
+  "phase": "maze",
+  "clock": {
+    "kind": "day",
+    "len": 180000,
+    "endAt": 1791476456173
+  },
+  "dark": false,
+  "darkAcc": 0,
+  "beastSlain": true,
+  "beastGrudge": 0,
+  "satiety": 100,
+  "sanity": 100,
+  "coin": 40,
+  "incense": 3,
+  "store": [],
+  "spirits": [],
+  "hall": {
+    "slots": {}
+  },
+  "hallUsed": {},
+  "maze": {
+    "depth": 1,
+    "w": 5,
+    "h": 5,
+    "rooms": [
+      {
+        "x": 0,
+        "y": 0,
+        "type": "empty",
+        "solved": false
+      },
+      {
+        "x": 1,
+        "y": 0,
+        "type": "empty",
+        "solved": false
+      },
+      {
+        "x": 2,
+        "y": 0,
+        "type": "chest",
+        "solved": false
+      },
+      {
+        "x": 3,
+        "y": 0,
+        "type": "trap",
+        "solved": false
+      },
+      {
+        "x": 4,
+        "y": 0,
+        "type": "stair",
+        "solved": false
+      },
+      {
+        "x": 0,
+        "y": 1,
+        "type": "empty",
+        "solved": false
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "type": "foe",
+        "solved": false
+      },
+      {
+        "x": 2,
+        "y": 1,
+        "type": "empty",
+        "solved": false
+      },
+      {
+        "x": 3,
+        "y": 1,
+        "type": "rest",
+        "solved": false
+      },
+      {
+        "x": 4,
+        "y": 1,
+        "type": "chest",
+        "solved": false
+      },
+      {
+        "x": 0,
+        "y": 2,
+        "type": "shop",
+        "solved": false
+      },
+      {
+        "x": 1,
+        "y": 2,
+        "type": "doctor",
+        "solved": false
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "type": "item",
+        "solved": false
+      },
+      {
+        "x": 3,
+        "y": 2,
+        "type": "empty",
+        "solved": false
+      },
+      {
+        "x": 4,
+        "y": 2,
+        "type": "item",
+        "solved": false
+      },
+      {
+        "x": 0,
+        "y": 3,
+        "type": "empty",
+        "solved": false
+      },
+      {
+        "x": 1,
+        "y": 3,
+        "type": "forge",
+        "solved": false
+      },
+      {
+        "x": 2,
+        "y": 3,
+        "type": "bard",
+        "solved": false
+      },
+      {
+        "x": 3,
+        "y": 3,
+        "type": "empty",
+        "solved": false
+      },
+      {
+        "x": 4,
+        "y": 3,
+        "type": "trap",
+        "solved": false
+      },
+      {
+        "x": 0,
+        "y": 4,
+        "type": "start",
+        "solved": true
+      },
+      {
+        "x": 1,
+        "y": 4,
+        "type": "foe",
+        "solved": false
+      },
+      {
+        "x": 2,
+        "y": 4,
+        "type": "item",
+        "solved": false
+      },
+      {
+        "x": 3,
+        "y": 4,
+        "type": "shrine",
+        "solved": false
+      },
+      {
+        "x": 4,
+        "y": 4,
+        "type": "empty",
+        "solved": false
+      }
+    ],
+    "px": 0,
+    "py": 4,
+    "stair": {
+      "x": 4,
+      "y": 0
+    },
+    "seen": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false
+    ],
+    "log": []
+  },
+  "beastId": null,
+  "guardianHp": 0,
+  "beastMaxHp": 0,
+  "bossTurns": 0,
+  "stance": null,
+  "combo": 0,
+  "lastSkillElement": null,
+  "frenzied": false,
+  "nightBonus": null,
+  "nightUsed": null,
+  "playerHp": 100,
+  "stats": {
+    "atk": 10,
+    "def": 4,
+    "crit": 0.05,
+    "mana": 42
+  },
+  "equipment": [],
+  "skills": [
+    "blaze",
+    "tide"
+  ],
+  "buffs": [],
+  "offerings": [],
+  "dao": {
+    "xp": 0,
+    "realm": 0,
+    "fated": null,
+    "fatedCount": 0,
+    "fatedDamage": 0,
+    "insights": [],
+    "history": []
+  },
+  "cycle": 1,
+  "relics": [],
+  "ending": null,
+  "over": null,
+  "news": [],
+  "startedAt": "2026-10-08T16:17:56.173Z"
+}

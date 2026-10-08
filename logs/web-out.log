@@ -1,0 +1,23 @@
+
+  本地智能体已就绪 → http://127.0.0.1:5178
+  Ollama 上游：http://127.0.0.1:11434
+  YOLO 引擎　：pt | 权重 runs/detect/runs/coco128_yolo11n/weights/best.pt | 置信度 0.25
+  沙箱目录　：C:\Users\Admin（无密码）\WorkBuddy\2026-09-29-22-32-37\local-ai-lab\sandbox
+
+  摄像头服务：已自动拉起（pid 3312，模型加载约 15 秒）
+  游戏 Harness 就绪：扩展 [quest, vision]
+
+  本地智能体已就绪 → http://127.0.0.1:5178
+  Ollama 上游：http://127.0.0.1:11434
+  YOLO 引擎　：pt | 权重 runs/detect/runs/coco128_yolo11n/weights/best.pt | 置信度 0.25
+  沙箱目录　：C:\Users\Admin（无密码）\WorkBuddy\2026-09-29-22-32-37\local-ai-lab\sandbox
+
+  摄像头服务：已自动拉起（pid 14576，模型加载约 15 秒）
+  游戏 Harness 就绪：扩展 [quest, vision]
+[2026-10-08T16:16:58.669Z] uncaughtException: TimeoutError: The operation was aborted due to timeout
+    at new DOMException (node:internal/per_context/domexception:76:18)
+    at Timeout._onTimeout (node:internal/abort_controller:155:9)
+    at listOnTimeout (node:internal/timers:585:17)
+    at process.processTimers (node:internal/timers:521:7)
+
+  Harness 就绪：14 个工具，扩展 [vision, research]

@@ -1,0 +1,15 @@
+
+  本地智能体已就绪 → http://127.0.0.1:5178
+  Ollama 上游：http://127.0.0.1:11434
+  YOLO 引擎　：pt | 权重 runs/detect/runs/coco128_yolo11n/weights/best.pt | 置信度 0.25
+  摄像头服务：http://127.0.0.1:5179
+  沙箱目录　：C:\Users\Admin（无密码）\WorkBuddy\2026-09-29-22-32-37\local-ai-lab\sandbox
+
+  游戏 Harness 就绪：扩展 [quest, vision]
+
+  本地智能体已就绪 → http://127.0.0.1:5178
+  Ollama 上游：http://127.0.0.1:11434
+  YOLO 引擎　：pt | 权重 runs/detect/runs/coco128_yolo11n/weights/best.pt | 置信度 0.25
+  摄像头服务：http://127.0.0.1:5179
+  沙箱目录　：C:\Users\Admin（无密码）\WorkBuddy\2026-09-29-22-32-37\local-ai-lab\sandbox
+

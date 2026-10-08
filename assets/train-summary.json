@@ -1,0 +1,11 @@
+{
+  "model": "yolo11n.pt",
+  "data": "coco128.yaml",
+  "epochs": 30,
+  "batch": 8,
+  "imgsz": 640,
+  "map50": 0.7878,
+  "map50_95": 0.6121,
+  "best_weights": "yolo/runs/detect/runs/coco128_yolo11n/weights/best.pt",
+  "save_dir": "yolo/runs/detect/runs/coco128_yolo11n"
+}

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>华小牛 · 本地智能体工作台</title>
+<link rel="stylesheet" href="/public/style.css" />
+</head>
+<body>
+<div class="app">
+  <!-- ── 侧栏 ───────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">小牛</div>
+      <div class="brand-text">
+        <strong>华小牛</strong>
+        <span>本地智能体工作台</span>
+      </div>
+    </div>
+
+    <button id="newChat" class="btn-new">＋ 新对话</button>
+
+    <nav class="nav">
+      <button id="visionToggle" class="nav-item" data-panel="vision">
+        <span class="ni-ico">👁</span>
+        <span class="ni-txt"><b>视觉面板</b><i>YOLO 实时检测</i></span>
+      </button>
+      <button id="harnessToggle" class="nav-item" data-panel="harness">
+        <span class="ni-ico">🧩</span>
+        <span class="ni-txt"><b>Harness 工作台</b><i>看它一层层往下走</i></span>
+      </button>
+      <a id="gameEntry" class="nav-item game" href="/public/game.html">
+        <span class="ni-ico">🎮</span>
+        <span class="ni-txt"><b>拾物奇谭</b><i>摄像头当手柄的游戏</i></span>
+      </a>
+    </nav>
+
+    <div class="panel">
+      <label class="field">
+        <span>模型</span>
+        <select id="modelSel"><option value="">加载中…</option></select>
+      </label>
+
+      <label class="field">
+        <span>温度 <em id="tempVal">0.6</em></span>
+        <input id="tempRange" type="range" min="0" max="1.2" step="0.1" value="0.6" />
+      </label>
+
+      <label class="switch">
+        <input id="toolToggle" type="checkbox" checked />
+        <span class="switch-track"><span class="switch-dot"></span></span>
+        <span class="switch-label">启用工具调用（智能体模式）</span>
+      </label>
+    </div>
+
+    <div class="panel tools">
+      <div class="panel-title">可用工具</div>
+      <ul>
+        <li><code>calculator</code> 精确计算</li>
+        <li><code>get_current_time</code> 当前时间</li>
+        <li><code>list_files</code> 浏览沙箱</li>
+        <li><code>read_file</code> 读取文件</li>
+        <li><code>write_file</code> 写入文件</li>
+        <li><code>fetch_url</code> 抓取网页</li>
+        <li><code>detect_image</code> 图片目标检测</li>
+        <li><code>detect_camera</code> 看摄像头画面</li>
+        <li><code>camera_snapshot</code> 拍一张照</li>
+      </ul>
+    </div>
+
+    <div class="agent-card" id="agentCard">
+      <span class="orb" id="orb"></span>
+      <span class="agent-meta">
+        <strong id="agentTitle">华小牛</strong>
+        <span id="statusText">正在连接…</span>
+      </span>
+      <span class="dot" id="dot" style="margin-left:auto"></span>
+    </div>
+  </aside>
+
+  <!-- ── 主区 ───────────────────────────────── -->
+  <main class="main">
+    <div id="chat" class="chat">
+      <div class="welcome">
+        <h1>你好，我是华小牛 🐮</h1>
+        <p>模型跑在你自己的显卡上，数据不出本机。打开工具开关后，我可以调用计算器、读写沙箱文件、抓网页。</p>
+        <div class="chips">
+          <button class="chip" data-q="帮我算一下 1024 * (37 + 88) 是多少">算个表达式</button>
+          <button class="chip" data-q="现在几点了？顺便看看沙箱里有什么文件">查时间 + 列文件</button>
+          <button class="chip" data-q="在沙箱里写一个 notes/plan.md，内容是本周的三条学习计划">写一份计划文件</button>
+          <button class="chip" data-q="用三句话解释一下什么是 RAG，然后把它存进沙箱 notes/rag.md">讲概念并存文件</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="composer">
+      <textarea id="input" rows="1" placeholder="说点什么…（Enter 发送，Shift+Enter 换行）"></textarea>
+      <button id="sendBtn" class="btn-send" title="发送">↑</button>
+      <button id="stopBtn" class="btn-stop" title="停止" hidden>■</button>
+    </div>
+  </main>
+</div>
+
+<!-- ── 右侧抽屉：视觉 / Harness 共用同一个壳体 ─────────────── -->
+<div id="drift" class="drift"></div>
+
+<div id="drawerVision" class="drawer" hidden>
+  <div class="drawer-head">
+    <div class="dh-title"><span class="dh-ico">👁</span><strong>视觉 · YOLO 实时检测</strong></div>
+    <button class="icon-btn drawer-close" data-close="drawerVision" title="收起">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="vision-screen">
+      <img id="camStream" alt="摄像头实时流" />
+      <div id="camFallback" class="cam-fallback">摄像头服务未启动</div>
+      <div class="scanline"></div>
+      <div class="corners"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <div id="camStats" class="vision-stats">等待摄像头服务…</div>
+    <div id="camDetections" class="vision-detections">暂无检测结果</div>
+
+    <div class="drawer-actions">
+      <button id="btnRefreshDetect" class="btn-ghost">刷新检测</button>
+      <button id="btnAskVision" class="btn-solid">让 AI 描述画面</button>
+    </div>
+  </div>
+</div>
+
+<div id="drawerHarness" class="drawer" hidden>
+  <div class="drawer-head">
+    <div class="dh-title"><span class="dh-ico">🧩</span><strong>Harness 工作台</strong></div>
+    <button class="icon-btn drawer-close" data-close="drawerHarness" title="收起">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div id="hState" class="h-state">装载中…</div>
+
+    <div class="h-goal">
+      <textarea id="hGoal" rows="3" placeholder="给它一个目标，然后你就是启动子。&#10;例：查一下 YOLO11 相比 YOLOv8 改了什么，存一份笔记，把结论记进长期记忆。"></textarea>
+      <div class="h-goal-actions">
+        <button id="hRun" class="btn-solid">▶ 启动</button>
+        <button id="hAbort" class="btn-ghost" hidden>■ 中断</button>
+        <button id="hReset" class="btn-ghost">新会话</button>
+      </div>
+    </div>
+
+    <div id="hConfirm" class="h-confirm" hidden>
+      <div class="h-confirm-title">⚠ 需要你点头</div>
+      <div id="hConfirmBody" class="h-confirm-body"></div>
+      <div class="h-confirm-actions">
+        <button id="hAllow" class="btn-solid">允许</button>
+        <button id="hDeny" class="btn-ghost">拒绝</button>
+      </div>
+    </div>
+
+    <div class="h-timeline-head">
+      <span>trace 时间线</span>
+      <button id="hClear" class="link-btn">清空</button>
+    </div>
+    <div id="hTimeline" class="h-timeline">
+      <div class="h-empty">还没跑过。给它一个目标，看它一层层往下走。</div>
+    </div>
+
+    <div id="hResult" class="h-result" hidden></div>
+  </div>
+</div>
+
+<script src="/public/app.js"></script>
+</body>
+</html>

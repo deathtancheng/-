@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>拾物奇谭 · 万物阁</title>
+<link rel="stylesheet" href="/public/game.css?v=4.5.5">
+</head>
+<body class="phase-maze">
+
+<div class="boss-bg" id="bossBg" aria-hidden="true"></div>
+
+<!-- 氛围层：飘浮尘埃 + 墨渍，纯装饰，不接事件 -->
+<div class="ambient" aria-hidden="true">
+  <div class="ink-blot b1"></div>
+  <div class="ink-blot b2"></div>
+  <div class="ink-blot b3"></div>
+  <canvas id="motes"></canvas>
+</div>
+
+<div class="stage">
+
+  <header>
+    <div class="title-block">
+      <h1 data-text="拾物奇谭">拾物奇谭</h1>
+      <span class="sub">白天拾物经营 · 夜里守住万物阁 · 摄像头读招 · 本地大模型当妖物</span>
+    </div>
+    <div class="head-right">
+      <button class="ver-chip" id="verChip" title="看看更新了什么">v4.5.5</button>
+      <button class="cycle-pill" id="cyclePill" title="周目：点一下可以回到第一周目">第 1 周目</button>
+      <div class="floor-pill">
+        <span class="fp-label">第</span>
+        <b id="lv">1</b>
+        <span class="fp-total">天</span>
+      </div>
+      <!-- 昼夜：一眼看出现在该拾物还是该守夜（phase 由 JS 切 class） -->
+      <div class="daynight-chip" id="dayNight" title="现在的时辰——走完就翻页">
+        <span class="dn-top">
+          <i class="dn-icon" id="dnIcon">☀</i>
+          <span class="dn-text" id="dnText">白天</span>
+          <small class="dn-sub" id="dnSub">拾物</small>
+        </span>
+        <!-- 时辰倒计时：时间会自己走，走完自动翻页 -->
+        <span class="dn-foot">
+          <b class="dn-time" id="dnTime">03:00</b>
+          <i class="dn-bar"><i id="dnFill"></i></i>
+        </span>
+      </div>
+      <button class="btn" id="btnReset">重开一局</button>
+      <a class="btn" href="/">← 回实验室</a>
+    </div>
+  </header>
+
+  <!-- 活下去的五个数：体力 / 饱食 / 精神 / 香火 / 铜钱 -->
+  <!-- === GalGame 三栏（v4.4）========================================
+       舞台是主角：场景大图铺满中央，角色立绘左右对峙，底下对话框。
+       地图靠左边只做导航，属性收进右边的角落。 -->
+  <main class="gal">
+
+    <!-- 左：旧宅地图 + 举物（要献东西时才抬取景框） -->
+    <aside class="gal-left">
+        <div class="maze-panel" id="mazePanel">
+          <div class="pn-head">
+            <span class="pn-title">旧宅 · 第 <b id="mzDepth">1</b> 层</span>
+            <span class="pn-hint" id="mzHint">走到梯子可以下去，随时能回阁</span>
+          </div>
+
+          <div class="mz-body">
+            <div class="mz-grid" id="mzGrid"></div>
+            <div class="mz-side">
+              <div class="mz-dpad" id="mzDpad">
+                <button class="dbtn up" data-dir="up" title="向上">↑</button>
+                <button class="dbtn left" data-dir="left" title="向左">←</button>
+                <button class="dbtn down" data-dir="down" title="向下">↓</button>
+                <button class="dbtn right" data-dir="right" title="向右">→</button>
+                <span class="dbtn mid">走</span>
+              </div>
+              <div class="mz-legend">
+                <span><i class="lg-item">拾</i>拾物处</span>
+                <span><i class="lg-foe">妖</i>妖物</span>
+                <span><i class="lg-chest">箱</i>箱笼</span>
+                <span><i class="lg-rest">歇</i>歇脚处</span>
+                <span><i class="lg-shrine">龛</i>神龛</span>
+                <span><i class="lg-shop">贩</i>行脚商</span>
+                <span><i class="lg-forge">炉</i>熔炉间</span>
+                <span><i class="lg-mirror">镜</i>铜镜间</span>
+                <span><i class="lg-guest">宿</i>借宿</span>
+                <span><i class="lg-shrine">医</i>郎中</span>
+                <span><i class="lg-shrine">谈</i>说书人</span>
+                <span><i class="lg-forge">隐</i>传功人</span>
+                <span><i class="lg-stair">梯</i>下楼的梯</span>
+              </div>
+              <div class="mz-nav" id="mzNav"></div>
+            </div>
+          </div>
+
+          <div class="room-card" id="roomCard" hidden></div>
+
+          <div class="mz-actions">
+            <button class="btn" id="btnDescend" hidden>顺着梯子下去</button>
+            <button class="btn primary" id="btnReturn" disabled>就此回阁</button>
+            <span class="mz-warn" id="mzWarn" hidden></span>
+          </div>
+        </div>
+        <div class="cam-body" id="camBody">
+          <div class="panel-frame">
+            <div class="frame-corner tl"></div><div class="frame-corner tr"></div>
+            <div class="frame-corner bl"></div><div class="frame-corner br"></div>
+
+            <div class="cam-wrap" id="camWrap">
+              <img id="cam" src="/api/camera/video" alt="摄像头">
+              <canvas id="overlay"></canvas>
+              <div class="scan"></div>
+              <div class="cam-off">摄像头未连接<br><small>没有也能玩——下面可以手动举物</small></div>
+            </div>
+          </div>
+
+          <div class="offer">
+            <div class="label" id="offerLabel">当前祭品</div>
+            <div class="name empty" id="offerName">镜头前还没有东西</div>
+            <div class="meta" id="offerMeta"></div>
+
+            <!-- 去向：这一祭想转化成什么。只在夜战里出现 -->
+            <div class="intents" id="intents">
+              <button class="intent on" data-intent="power"><b>强攻</b><i>伤害 ×1.35，攻击 +2</i></button>
+              <button class="intent" data-intent="guard"><b>固守</b><i>伤害 ×0.8，熔出装备</i></button>
+              <button class="intent" data-intent="arcane"><b>蕴术</b><i>伤害 ×0.7，术力 +18</i></button>
+            </div>
+
+            <div class="cost-line" id="costLine">这一祭要烧 <b>1</b> 炷香</div>
+
+            <button class="btn-offer" id="btnOffer" disabled>献 祭 此 物</button>
+
+            <div class="manual">
+              <div class="m-hint">没有摄像头？手动举物 ↓</div>
+              <!-- 按钮由 offering.js 按后端的「物件名 → 属性」对照表生成，
+                   属性一定跟服务端一致，不会两边各抄一份走岔 -->
+              <div class="m-items" id="mItems"></div>
+            </div>
+          </div>
+
+          <div class="banner">
+            举得<b>越近越大</b>威力越高，识别<b>越准</b>拾到的越值钱，
+            属性<b>克制</b>妖物时伤害接近翻倍。
+          </div>
+        </div>
+    </aside>
+
+    <!-- 中：舞台 + 对话框 -->
+    <section class="gal-mid">
+      <div class="gal-stage" id="galStage">
+        <div class="gs-bg" id="gsBg"></div>
+        <div class="gs-vig"></div>
+        <div class="gs-grain"></div>
+        <div class="gs-tier" id="gsTier" hidden>
+          <span class="gs-name" id="gsFoeName">—</span>
+          <span class="gs-hp" id="gsHpWrap"><span class="bar"><i id="gsFoeHp"></i></span><span id="gsFoeHpTxt">—</span></span>
+        </div>
+        <span class="gs-badge" id="gsBadge"></span>
+        <div class="gs-cast">
+          <img class="gs-hero" id="gsHero" src="assets/figure/traveler.png" alt="旅人">
+          <img class="gs-foe" id="gsFoe" alt="" hidden>
+        </div>
+      </div>
+
+      <div class="gal-dialogue">
+        <span class="gd-name" id="gdName">旧宅</span>
+        <p class="speech" id="speech">阁门在你身后合上了。走一格，揭一片。</p>
+        <div class="sc-acts" id="scActs"></div>
+      </div>
+    </section>
+
+    <!-- 右：属性角落（旅人 / 状态 / 阁楼 / 夜战 / 流水） -->
+    <aside class="gal-right">
+        <div class="figure-card" id="figureCard">
+          <div class="fc-stage" id="fcStage">
+            <img class="fc-base" src="assets/figure/traveler.png" alt="旅人">
+            <img class="fc-layer" id="fcL0" alt="" hidden>
+            <img class="fc-layer" id="fcL1" alt="" hidden>
+            <img class="fc-layer" id="fcL2" alt="" hidden>
+          </div>
+          <div class="fc-side">
+            <div class="fc-title">旅人<small id="fcRealm">第 1 周目</small></div>
+            <div class="fc-nums">
+              <span>攻 <b id="fcAtk">10</b></span>
+              <span>防 <b id="fcDef">4</b></span>
+              <span>暴 <b id="fcCrit">5%</b></span>
+            </div>
+            <div class="fc-slots" id="fcSlots"></div>
+          </div>
+        </div>
+    <div class="res-bar" id="resBar">
+      <div class="res r-hp">
+        <span class="rk">体力</span>
+        <div class="rbar"><i id="hpFill"></i></div>
+        <b id="hpNum">100</b>
+      </div>
+      <div class="res r-sat">
+        <span class="rk">饱食</span>
+        <div class="rbar"><i id="satFill"></i></div>
+        <b id="satNum">100</b>
+      </div>
+      <div class="res r-san">
+        <span class="rk">精神</span>
+        <div class="rbar"><i id="sanFill"></i></div>
+        <b id="sanNum">100</b>
+      </div>
+      <div class="res r-inc" title="献祭一次要烧一炷香。烧完了只能靠咒术。">
+        <span class="rk">香火</span>
+        <div class="rbar"><i id="incFill"></i></div>
+        <b id="incNum">3</b>
+      </div>
+      <div class="res r-coin">
+        <span class="rk">铜钱</span>
+        <b id="coinNum">0</b>
+      </div>
+      <div class="day-track" id="dayTrack"></div>
+    </div>
+        <div class="hall-panel" id="hallPanel">
+          <div class="pn-head">
+            <span class="pn-title">万物阁 · <b id="hlTitle">一间空阁</b></span>
+            <span class="pn-hint">阁越像样，夜里越顶得住</span>
+          </div>
+
+          <div class="hl-grid">
+            <div class="hl-box">
+              <div class="hl-cap">营造 <small>铜钱 <b id="hlCoin">0</b></small></div>
+              <div class="hl-list" id="hlFacilities"></div>
+            </div>
+            <div class="hl-box">
+              <div class="hl-cap">货仓 <small id="hlStoreCap">0 / 6</small></div>
+              <div class="hl-list" id="hlStore"></div>
+            </div>
+            <div class="hl-box">
+              <div class="hl-cap">精怪 <small id="hlSpiritCap">0 / 0</small></div>
+              <div class="hl-list" id="hlSpirits"></div>
+            </div>
+            <div class="hl-box">
+              <div class="hl-cap">日常</div>
+              <div class="hl-daily" id="hlDaily"></div>
+            </div>
+          </div>
+
+          <div class="hl-foot">
+            <button class="btn" id="btnBackMaze">再出门一趟</button>
+            <button class="btn night" id="btnNight">入 夜 · 守 阁</button>
+          </div>
+        </div>
+        <div class="night-panel" id="nightPanel">
+          <div class="turn-banner" id="turnBanner" hidden>
+            <span class="turn-label" id="turnLabel">你的回合</span>
+            <span class="turn-note" id="turnNote">举起东西</span>
+          </div>
+
+          <!-- 架势 + 限时 -->
+          <div class="stance-bar" id="stanceBar" hidden>
+            <div class="st-left">
+              <span class="st-name" id="stName">—</span>
+              <span class="st-hint" id="stHint"></span>
+            </div>
+            <div class="st-right">
+              <span class="st-turns" id="stTurns">还能忍 8 回合</span>
+            </div>
+          </div>
+
+          <div class="guardian">
+            <div class="g-portrait">
+              <img id="gPortrait" src="/public/img/guardian-1-fire.jpg" alt="妖物">
+              <span class="g-rage" id="gRage" hidden>狂暴</span>
+              <span class="g-combo" id="gCombo" hidden>连击 ×2</span>
+            </div>
+            <div class="g-info">
+              <div class="g-head">
+                <span class="g-name" id="gName">—</span>
+                <span class="g-ele" id="gEle">—</span>
+              </div>
+              <div class="bar" id="gBarWrap"><i id="gBar"></i></div>
+              <div class="hp-text">
+                <span id="gHp">— / —</span>
+                <span id="gScene"></span>
+              </div>
+              <div class="g-tone" id="gTone"></div>
+            </div>
+          </div>
+
+
+          <div class="player-row">
+            <div class="who">
+              <span>旅人</span>
+              <span class="hp-text" style="margin:0" id="pHp">100 / 100</span>
+            </div>
+            <div class="bar player"><i id="pBar"></i></div>
+            <div class="buff-row" id="buffRow" hidden></div>
+          </div>
+
+          <!-- 旅人面板：数值 / 装备 / 咒术 / 道行 -->
+          <div class="traveler" id="travelerBox">
+            <div class="tv-head">
+              <span class="tv-title">旅人</span>
+              <span class="tv-hint">白天攒的东西都挂在这儿</span>
+            </div>
+            <div class="stats" id="statRow">
+              <div class="stat"><span class="k">攻</span><b id="stAtk">10</b></div>
+              <div class="stat"><span class="k">防</span><b id="stDef">4</b></div>
+              <div class="stat"><span class="k">暴</span><b id="stCrit">5%</b></div>
+            </div>
+            <div class="mana-row">
+              <span class="k">术力</span>
+              <div class="bar mana"><i id="manaBar"></i></div>
+              <span class="mana-num" id="manaNum">42</span>
+            </div>
+            <div class="slots">
+              <div class="slot-title">装备</div>
+              <div class="slot-list" id="equipRow"></div>
+            </div>
+            <div class="slots">
+              <div class="slot-title">咒术 <small>点一下，念出咒名</small></div>
+              <div class="slot-list" id="skillRow"></div>
+            </div>
+            <div class="slots" id="relicWrap" hidden>
+              <div class="slot-title">遗物 <small>跨局保留</small></div>
+              <div class="slot-list" id="relicRow"></div>
+            </div>
+            <div class="slots" id="daoWrap" hidden>
+              <div class="slot-title">道行 <small id="daoRealm">见物</small></div>
+              <div class="dao-bar"><i id="daoBar"></i></div>
+              <div class="dao-meta" id="daoMeta"></div>
+            </div>
+            <div class="slots" id="insightWrap" hidden>
+              <div class="slot-title">心得 <small>参悟所得</small></div>
+              <div class="slot-list" id="insightRow"></div>
+            </div>
+            <div class="cast-hint" id="castHint" hidden>
+              <span class="mic-dot"></span>
+              <span id="castText">正在听……念出「焚天」</span>
+            </div>
+          </div>
+
+          <div class="chips" id="chips"></div>
+        </div>
+        <div class="news-panel">
+          <div class="pn-head"><span class="pn-title">这一局</span></div>
+          <div class="news-list" id="newsList"></div>
+        </div>
+    <section class="log" id="log">
+      <div class="row"><span class="idx">—</span><span class="what">先往迷宫里走一格看看。走进有事的房间会弹出场景——举着东西点「递上此物」就能处理掉。</span></div>
+    </section>
+    </aside>
+  </main>
+
+
+  <footer>
+    <input id="chat" placeholder="也可以直接跟妖物说话（不消耗祭品）……" autocomplete="off">
+    <button class="btn" id="btnSay">说</button>
+    <div class="hstat">
+      <span class="dot" id="hDot"></span>
+      <span id="hStat">Harness 待命</span>
+    </div>
+  </footer>
+
+</div>
+
+<!-- 打击数字飘出层 -->
+<div class="fx-layer" id="fxLayer" aria-hidden="true"></div>
+
+<!-- 敌人攻击弹道（妖物 → 旅人） -->
+<div class="bolt" id="bolt" aria-hidden="true"></div>
+
+<!-- 屏幕闪白（受击）层 -->
+<div class="flash" id="flash" aria-hidden="true"></div>
+
+<!-- 胜负特效：水墨晕染（败）/ 金卷展开（胜） -->
+<div class="ending-fx" id="endingFx" aria-hidden="true">
+  <div class="end-ink"></div>
+  <div class="end-seal" id="endSeal"></div>
+</div>
+
+<!-- ═══ 开场：GalGame 式的标题画面 ═══════════════════════════
+     规矩同 galgame：整屏主视觉立绘，左上一枚家印做 logo，
+     左侧一列竖排菜单（图标 + 大字 + 小注），点下去才真正进阁。 -->
+<div class="title-screen" id="titleScreen" hidden>
+  <div class="ts-shade" aria-hidden="true"></div>
+
+  <header class="ts-logo" aria-hidden="true">
+    <span class="ts-logo-seal">物</span>
+    <span class="ts-logo-txt">拾物奇谭<small>SHIWU · QITAN</small></span>
+  </header>
+
+  <nav class="ts-menu">
+    <button class="ts-item primary" id="tsStart">
+      <span class="ts-ico">✦</span>
+      <span class="ts-txt"><b>推 门 进 阁</b><small>NEW GAME · 白天拾物，夜里守阁</small></span>
+    </button>
+    <button class="ts-item" id="tsNew">
+      <span class="ts-ico">↺</span>
+      <span class="ts-txt"><b>重开这一局</b><small>RESTART · 进度归零，周目与遗物保留</small></span>
+    </button>
+    <button class="ts-item" id="tsCycle">
+      <span class="ts-ico">回</span>
+      <span class="ts-txt"><b>回到第一周目</b><small>RESET CYCLE · 连周目、遗物一起清空</small></span>
+    </button>
+    <button class="ts-item" id="tsLog">
+      <span class="ts-ico">卷</span>
+      <span class="ts-txt"><b>看看更新了什么</b><small>CHANGELOG · 更新日志</small></span>
+    </button>
+  </nav>
+
+  <div class="ts-foot">
+    <p class="ts-note" id="tsNote">天光有时辰，走得比你想的快。</p>
+    <p class="ts-legacy" id="tsLegacy"></p>
+  </div>
+</div>
+
+<!-- 权限闸门 / 结算 -->
+<div class="modal" id="modal">
+  <div class="card">
+    <h2 id="mTitle">妖物想动笔</h2>
+    <p id="mBody"></p>
+    <pre id="mPre" style="display:none"></pre>
+    <div class="acts" id="mActs"></div>
+  </div>
+</div>
+
+<script type="module" src="/public/game.js"></script>
+</body>
+</html>

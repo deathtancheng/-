@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>《拾物奇谭》GalGame 布局样板 v4.4</title>
+<!--
+  ════════════════════════════════════════════════════════════════
+  GalGame 布局样板（prototype）
+  ------------------------------------------------------------------
+  这是**独立的布局提案**，不动主项目代码。看完点头我再往 game.html 里搬。
+  布局主张（三句话）：
+    · 舞台是主角 —— 场景大图铺满中央，角色立绘站在图上
+    · 地图靠边 —— 5×5 十字视野缩到左边栏，只做导航不做主角
+    · 属性收角落 —— 旅人/妖物的数值贴右上角，不打断看戏
+  全部素材复用 assets/ 下已有的图；数据是写死的假数据，只为看效果。
+  ════════════════════════════════════════════════════════════════
+-->
+<style>
+:root {
+  --paper:      #f7f1e2;
+  --paper-2:    #fffdf6;
+  --ink:        #2b2823;
+  --ink-soft:   #6f6858;
+  --line:       rgba(120, 108, 84, .28);
+  --cinnabar:   #b23a2e;   /* 朱砂 */
+  --amber:      #c9922e;   /* 烛金 */
+  --matcha:     #4a6b52;   /* 抹茶 */
+  --dusk:       #2b2c46;   /* 夜 */
+  --serif: "Songti SC", "STSong", "SimSun", "PingFang SC", serif;
+  --sans: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --shadow: 0 6px 24px rgba(72, 60, 36, .12);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--sans);
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 600px at 70% -10%, #fffdf7 0%, transparent 60%),
+    linear-gradient(180deg, #f3ecdb 0%, #e9e0cb 100%);
+  overflow: hidden;
+}
+
+/* ═══ 顶栏 ══════════════════════════════════════════════════ */
+.top {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  background: linear-gradient(180deg, rgba(255,253,246,.96), rgba(243,236,222,.9));
+  border-bottom: 1px solid var(--line);
+}
+.top h1 {
+  font-family: var(--serif);
+  font-size: 19px;
+  letter-spacing: 5px;
+  margin: 0 10px 0 0;
+  display: flex; align-items: baseline; gap: 8px;
+}
+.top h1 em {
+  font-style: normal;
+  font-family: var(--sans); font-size: 10px; letter-spacing: 1px;
+  color: #fff; background: var(--cinnabar);
+  padding: 2px 8px; border-radius: 999px;
+}
+.chip {
+  font-family: var(--serif); font-size: 12px; letter-spacing: 1.5px;
+  padding: 4px 11px; border-radius: 999px; white-space: nowrap;
+  background: rgba(255,255,255,.7); border: 1px solid var(--line);
+  color: var(--ink-soft);
+}
+.chip b { color: var(--ink); }
+.chip.night { color: #d3d9f2; background: linear-gradient(180deg, #2f3152, #1e1f38); border-color: #454a70; }
+.chip.day   { color: #8a5a1e; background: linear-gradient(180deg, #fff3d6, #f6e2b2); border-color: rgba(201,146,46,.45); }
+.spacer { flex: 1; }
+.btn-s {
+  font-family: var(--serif); font-size: 12px; letter-spacing: 1px;
+  padding: 5px 12px; border-radius: 8px; cursor: pointer;
+  background: rgba(255,255,255,.75); border: 1px solid var(--line); color: var(--ink);
+}
+.btn-s:hover { border-color: var(--cinnabar); color: var(--cinnabar); }
+.btn-s.on { background: var(--cinnabar); border-color: var(--cinnabar); color: #fff; }
+
+/* ═══ 三栏骨架 ══════════════════════════════════════════════ */
+.wrap {
+  display: grid;
+  grid-template-columns: 214px 1fr 232px;
+  gap: 12px;
+  padding: 12px 14px 14px;
+  height: calc(100vh - 52px);
+}
+
+/* ── 左栏：地图 ─────────────────────────────────────────── */
+.side-l { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.card {
+  background: linear-gradient(180deg, rgba(255,253,246,.96), rgba(242,235,219,.9));
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.card > h3 {
+  margin: 0;
+  padding: 8px 12px 6px;
+  font-family: var(--serif); font-size: 13px; letter-spacing: 3px;
+  color: var(--ink-soft); font-weight: 400;
+  border-bottom: 1px dashed var(--line);
+}
+.card .body { padding: 10px 12px 12px; }
+
+.maze {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  aspect-ratio: 1;
+}
+.cell {
+  position: relative;
+  border-radius: 7px;
+  display: grid; place-items: center;
+  font-family: var(--serif); font-size: 15px;
+  background: rgba(255,255,255,.6);
+  border: 1px solid rgba(120,108,84,.16);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: transform .16s, box-shadow .16s, background .2s;
+}
+.cell:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(72,60,36,.18); }
+.cell.fog {
+  background: repeating-linear-gradient(45deg, rgba(150,140,115,.09) 0 3px, transparent 3px 7px);
+  color: transparent; cursor: default; border-style: dashed;
+}
+.cell.fog:hover { transform: none; box-shadow: none; }
+.cell.here {
+  background: linear-gradient(180deg, #fff, #f0e6cf);
+  border: 1.5px solid var(--cinnabar);
+  color: var(--cinnabar);
+  box-shadow: 0 0 0 3px rgba(178,58,46,.12);
+}
+.cell.block { border-color: var(--cinnabar); color: var(--cinnabar); }
+.cell.gate  { color: #8a7a55; }
+.cell .me {
+  position: absolute; bottom: 4px; width: 5px; height: 5px;
+  border-radius: 50%; background: var(--cinnabar);
+}
+.dpad {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;
+  margin-top: 10px; place-items: center;
+}
+.dpad button {
+  width: 100%; aspect-ratio: 1; border-radius: 8px; cursor: pointer;
+  background: rgba(255,255,255,.7); border: 1px solid var(--line);
+  color: var(--ink); font-size: 15px; line-height: 1;
+}
+.dpad button:hover { background: #fff; border-color: var(--matcha); color: var(--matcha); }
+.dpad .mid { visibility: hidden; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 10.5px; color: var(--ink-soft); }
+.legend i { font-family: var(--serif); font-style: normal; }
+.navline { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--ink-soft); }
+.navline span {
+  padding: 3px 8px; border-radius: 999px;
+  background: rgba(255,255,255,.6); border: 1px dashed var(--line);
+}
+.navline b { font-family: var(--serif); color: var(--ink); }
+
+/* ── 中栏：舞台 ─────────────────────────────────────────── */
+.stage-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+.stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 40px rgba(60, 48, 26, .22);
+  background: #1a1712;
+}
+.stage .bg {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center 42%;
+  filter: saturate(.96);
+}
+.stage .vig {           /* 四角压暗，把视线收到中间 */
+  position: absolute; inset: 0;
+  background: radial-gradient(120% 90% at 50% 40%, transparent 40%, rgba(20,16,10,.55) 100%);
+}
+.stage .grain {         /* 一点纸纹，别让它太数码 */
+  position: absolute; inset: 0; opacity: .3;
+  background: repeating-linear-gradient(115deg, rgba(255,255,255,.05) 0 2px, transparent 2px 7px);
+}
+.stage .cast {          /* 立绘层：站在图上 */
+  position: absolute; bottom: 6%; left: 50%;
+  transform: translateX(-50%);
+  height: 84%;
+  display: flex; align-items: flex-end; gap: 2%;
+  pointer-events: none;
+}
+.stage .cast img {
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,.45));
+}
+.stage .cast .foe-art { animation: hover 5.5s ease-in-out infinite; }
+@keyframes hover { 50% { transform: translateY(-8px); } }
+
+.stage .tier {
+  position: absolute; left: 16px; top: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.tier .name {
+  font-family: var(--serif); font-size: 13px; letter-spacing: 2px;
+  color: #f6ecd8; background: rgba(24,18,12,.6);
+  border: 1px solid rgba(240,200,120,.35);
+  padding: 4px 12px; border-radius: 999px;
+  backdrop-filter: blur(3px);
+}
+.tier .hp { display: flex; align-items: center; gap: 6px; }
+.tier .hp .bar {
+  width: 128px; height: 6px; border-radius: 3px;
+  background: rgba(255,255,255,.18); overflow: hidden;
+}
+.tier .hp .bar i { display: block; height: 100%; width: 46%; background: linear-gradient(90deg, #c05746, #e08a72); }
+.tier .hp span { font-size: 11px; color: #e8dcc6; letter-spacing: 1px; }
+
+.stage .badge {
+  position: absolute; right: 16px; top: 14px;
+  font-family: var(--serif); font-size: 12px; letter-spacing: 2px;
+  color: #f0d9a4; background: rgba(24,18,12,.55);
+  border: 1px solid rgba(240,200,120,.3);
+  padding: 4px 11px; border-radius: 999px;
+}
+
+/* 对话框（galgame 的灵魂在底下这块） */
+.dialogue {
+  flex: none;
+  background: linear-gradient(180deg, rgba(255,253,246,.97), rgba(244,237,221,.96));
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 14px 20px 16px;
+  min-height: 168px;
+}
+.nameplate {
+  display: inline-block;
+  font-family: var(--serif); font-size: 14px; letter-spacing: 3px;
+  color: #fff8ea; background: linear-gradient(180deg, #b23a2e, #8e2c22);
+  padding: 4px 18px 5px; border-radius: 6px 6px 0 0;
+  margin-bottom: 9px;
+  box-shadow: 0 3px 10px rgba(142,44,34,.3);
+}
+.nameplate.mute { background: linear-gradient(180deg, #6d675c, #4d473e); }
+.text {
+  font-family: var(--serif); font-size: 15px; line-height: 2;
+  color: var(--ink); margin: 0 0 12px; min-height: 58px;
+}
+.text b { color: var(--cinnabar); font-weight: 400; }
+.acts { display: flex; gap: 10px; flex-wrap: wrap; }
+.act {
+  font-family: var(--serif); font-size: 13.5px; letter-spacing: 2px;
+  padding: 9px 20px; border-radius: 9px; cursor: pointer;
+  background: linear-gradient(180deg, #fffdf7, #f0e8d6);
+  border: 1px solid var(--line); color: var(--ink);
+  transition: transform .15s, box-shadow .15s;
+}
+.act:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(72,60,36,.2); }
+.act.primary { background: linear-gradient(180deg, #4a6b52, #3a5741); color: #fff; border-color: #3a5741; }
+.act.danger  { background: linear-gradient(180deg, #b23a2e, #8e2c22); color: #fff; border-color: #8e2c22; }
+.act small { display: block; font-family: var(--sans); font-size: 10px; letter-spacing: 1px; opacity: .7; margin-top: 2px; }
+
+/* ── 右栏：属性角落 ─────────────────────────────────────── */
+.side-r { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.figure {
+  display: flex; gap: 12px; padding: 10px 12px; align-items: stretch;
+}
+.figure .pic {
+  position: relative; flex: none; width: 96px; height: 138px;
+  border-radius: 9px; overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 10%, rgba(255,255,255,.55), transparent 60%),
+              linear-gradient(180deg, rgba(226,232,220,.8), rgba(203,212,196,.65));
+  border: 1px solid rgba(109,158,120,.24);
+}
+.figure .pic img { position: absolute; left: 50%; bottom: -3px; height: 100%; transform: translateX(-50%); }
+.figure .pic .ly {
+  position: absolute; width: 34%; height: auto; z-index: 2;
+  filter: drop-shadow(0 1px 3px rgba(40,50,40,.4));
+}
+.figure .pic .ly0 { left: 0;   top: 30%; transform: rotate(-10deg); }
+.figure .pic .ly1 { right: 0;  top: 27%; transform: rotate(10deg); }
+.figure .pic .ly2 { left: 34%; top: 55%; transform: rotate(-4deg); }
+.figure .meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.figure .meta .nm { font-family: var(--serif); font-size: 15px; letter-spacing: 3px; }
+.figure .meta .nm small { font-family: var(--sans); font-size: 10px; color: var(--ink-soft); letter-spacing: 1px; margin-left: 5px; }
+.figure .meta .st { display: flex; gap: 10px; font-size: 11px; color: var(--ink-soft); }
+.figure .meta .st b { font-family: var(--serif); font-size: 14px; color: var(--ink); margin-left: 2px; }
+.slots { display: flex; flex-direction: column; gap: 4px; }
+.slot {
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 7px; border-radius: 7px; font-size: 11px;
+  background: rgba(255,255,255,.6); border: 1px solid rgba(109,158,120,.2);
+}
+.slot img { width: 19px; height: 19px; object-fit: contain; }
+.slot i { font-style: normal; font-family: var(--serif); font-size: 11.5px; }
+.slot.empty { border-style: dashed; color: #a9a396; justify-content: center; }
+
+.vitals { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+.vital { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--ink-soft); }
+.vital .k { width: 28px; flex: none; letter-spacing: 1px; }
+.vital .bar { flex: 1; height: 6px; border-radius: 3px; background: rgba(53,70,60,.13); overflow: hidden; }
+.vital .bar i { display: block; height: 100%; border-radius: 3px; }
+.vital .n { width: 30px; text-align: right; font-family: var(--serif); font-size: 13px; color: var(--ink); }
+.v-hp  .bar i { background: linear-gradient(90deg, #c05746, #d97b6c); }
+.v-sat .bar i { background: linear-gradient(90deg, #d9a441, #f0d9a4); }
+.v-san .bar i { background: linear-gradient(90deg, #6d9e78, #a9c7a4); }
+.v-inc .bar i { background: linear-gradient(90deg, #b06a3a, #e0a86a); }
+
+.logline { padding: 9px 12px 11px; font-size: 11.5px; line-height: 1.9; color: var(--ink-soft); }
+.logline div { display: flex; gap: 7px; }
+.logline b { font-family: var(--serif); font-weight: 400; color: var(--cinnabar); flex: none; }
+.logline span { font-family: var(--serif); color: var(--ink); }
+
+/* 样板自带的说明条 */
+.note {
+  position: fixed; right: 14px; bottom: 12px;
+  font-size: 11px; color: var(--ink-soft);
+  background: rgba(255,253,246,.92); border: 1px dashed var(--line);
+  padding: 6px 12px; border-radius: 8px;
+}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>拾物奇谭<em>GalGame 布局样板</em></h1>
+  <span class="chip">v4.4 <b>样板</b></span>
+  <span class="chip">第 <b>2</b> 周目</span>
+  <span class="chip">第 <b>4</b> 天 · 第 2 层</span>
+  <span class="chip day" id="chipDay">☀ 白天 · 拾物</span>
+  <span class="spacer"></span>
+  <span style="font-size:11px;color:var(--ink-soft);letter-spacing:1px">切场景看效果：</span>
+  <button class="btn-s on" data-scene="foe">遇妖</button>
+  <button class="btn-s" data-scene="night">夜战</button>
+  <button class="btn-s" data-scene="forge">熔炉</button>
+  <span class="spacer"></span>
+  <button class="btn-s">重开一局</button>
+</div>
+
+<div class="wrap">
+
+  <!-- ═══ 左：地图 ═══ -->
+  <aside class="side-l">
+    <div class="card">
+      <h3>旧宅 · 十字视野</h3>
+      <div class="body">
+        <div class="maze" id="maze"></div>
+        <div class="dpad">
+          <span></span><button data-dir="up">↑</button><span></span>
+          <button data-dir="left">←</button><span class="mid">走</span><button data-dir="right">→</button>
+          <span></span><button data-dir="down">↓</button><span></span>
+        </div>
+        <div class="navline">
+          <span>梯 <b>东北·还有些路</b></span>
+          <span>歇 <b>东南·不远</b></span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>图例</h3>
+      <div class="body legend">
+        <span><i>拾</i>拾物处</span><span><i>妖</i>妖物</span>
+        <span><i>箱</i>箱笼</span><span><i>炉</i>熔炉间</span>
+        <span><i>龛</i>神龛</span><span><i>镜</i>铜镜间</span>
+        <span><i>歇</i>歇脚处</span><span><i>梯</i>梯</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ 中：舞台 + 对话框 ═══ -->
+  <section class="stage-col">
+    <div class="stage" id="stage">
+      <div class="bg" id="stageBg"></div>
+      <div class="vig"></div>
+      <div class="grain"></div>
+      <div class="tier" id="tier">
+        <span class="name" id="foeName">檐下雀奴</span>
+        <span class="hp"><span class="bar"><i id="foeHp"></i></span><span id="foeHpTxt">35/35</span></span>
+      </div>
+      <span class="badge" id="stageBadge">活属 · 迷路</span>
+      <div class="cast" id="cast"></div>
+    </div>
+
+    <div class="dialogue">
+      <span class="nameplate" id="np">檐下雀奴</span>
+      <p class="text" id="dtext"></p>
+      <div class="acts" id="acts"></div>
+    </div>
+  </section>
+
+  <!-- ═══ 右：属性角落 ═══ -->
+  <aside class="side-r">
+    <div class="card">
+      <h3>旅人</h3>
+      <div class="figure">
+        <div class="pic">
+          <img src="assets/figure/traveler.png" alt="旅人">
+          <img class="ly ly0" src="assets/figure/eq-metal.png" alt="">
+          <img class="ly ly1" src="assets/figure/eq-fire.png" alt="">
+          <img class="ly ly2" src="assets/figure/eq-guard.png" alt="">
+        </div>
+        <div class="meta">
+          <div class="nm">旅人<small>第 2 周目</small></div>
+          <div class="st"><span>攻<b>18</b></span><span>防<b>9</b></span><span>暴<b>8%</b></span></div>
+          <div class="slots">
+            <div class="slot"><img src="assets/figure/eq-metal.png"><i>锋剪符</i></div>
+            <div class="slot"><img src="assets/figure/eq-fire.png"><i>燃帛符</i></div>
+            <div class="slot"><img src="assets/figure/eq-guard.png"><i>护伞符</i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>状态</h3>
+      <div class="vitals">
+        <div class="vital v-hp"><span class="k">体力</span><span class="bar"><i style="width:76%"></i></span><span class="n">76</span></div>
+        <div class="vital v-sat"><span class="k">饱食</span><span class="bar"><i style="width:58%"></i></span><span class="n">58</span></div>
+        <div class="vital v-san"><span class="k">精神</span><span class="bar"><i style="width:84%"></i></span><span class="n">84</span></div>
+        <div class="vital v-inc"><span class="k">香火</span><span class="bar"><i style="width:50%"></i></span><span class="n">3/6</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>这一局</h3>
+      <div class="logline">
+        <div><b>·</b><span>箱笼里是一把铜钱（+27 文）。</span></div>
+        <div><b>·</b><span>墙上的刻字让你静了些（+6 精神）。</span></div>
+        <div><b>↻</b><span>宅子在动 —— 视野外换了 12 间。</span></div>
+        <div><b>·</b><span>你从阁里取出一件旧物砸过去。</span></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="note">样板：单文件、假数据。布局定下来就搬进 game.html。</div>
+
+<script>
+/* ═══ 假数据：三种场景，看布局够不够用 ═══════════════════ */
+const SCENES = {
+  foe: {
+    bg: 'assets/scene/foe.jpg',
+    badge: '活属 · 迷路',
+    cast: [
+      { src: 'assets/figure/traveler.png', cls: '' },
+      { src: 'assets/figure/foe.png', cls: 'foe-art' },
+    ],
+    tier: { name: '檐下雀奴（活）', hp: 35, max: 35, show: true },
+    np: '檐下雀奴', mute: false,
+    text: '一只纸灰凝成的飞蛾妖堵在门口，翅膀上的符纸还在烧。<b>退路已经没了</b>——举起东西砸它，或者转身（但你转不开）。',
+    acts: [
+      { t: '举起茶杯砸过去', s: '水 8 · 越近越重', cls: 'primary' },
+      { t: '举起古剑劈过去', s: '金 18 · 克制活属' },
+      { t: '退一步再看', s: '没用，但你想看看它', cls: 'danger' },
+    ],
+  },
+  night: {
+    bg: 'assets/scene/shrine.jpg',
+    badge: '第 4 夜 · 守阁',
+    cast: [
+      { src: 'assets/figure/traveler.png', cls: '' },
+      { src: 'assets/figure/foe.png', cls: 'foe-art' },
+    ],
+    tier: { name: '灰烬书童（知）', hp: 23, max: 50, show: true },
+    np: '妖物', mute: false,
+    text: '「我乃万物阁的一道关。你带来的东西，我收下了——<b>香也一并收了</b>。」它的声音像翻页，沙沙的。',
+    acts: [
+      { t: '献祭此物', s: '烧 1 炷香 · 余 3 炷', cls: 'primary' },
+      { t: '固守', s: '伤害 ×0.8 · 熔出装备' },
+      { t: '蕴术', s: '伤害 ×0.7 · 术力 +18' },
+    ],
+  },
+  forge: {
+    bg: 'assets/scene/forge.jpg',
+    badge: '火还没灭',
+    cast: [{ src: 'assets/figure/traveler.png', cls: '' }],
+    tier: { show: false },
+    np: '熔炉间', mute: true,
+    text: '一间还热的熔炉，火舌舔着坩埚。<b>旧物丢进去能熔出一件护符</b>——就是不知道熔出来的是什么属性。',
+    acts: [
+      { t: '举起旧伞丢进去', s: '护 9 · 偏防御', cls: 'primary' },
+      { t: '举起手机丢进去', s: '电 12 · 偏暴击' },
+      { t: '掩上炉门', s: '算了', cls: 'danger' },
+    ],
+  },
+};
+
+/* ═══ 迷宫：十字视野的假数据 ═════════════════════════════ */
+const MAZE = [
+  ['fog', 'fog', 'fog', 'fog', 'fog'],
+  ['fog', 'fog', 'fog', 'fog', 'fog'],
+  ['fog', '妖', 'fog', 'fog', 'fog'],
+  ['fog', 'fog', '·',  'fog', 'fog'],
+  ['fog', '门', 'fog', 'fog', '梯'],
+];
+
+function buildMaze(px, py) {
+  const m = document.getElementById('maze');
+  m.innerHTML = MAZE.flat().map((t, i) => {
+    const x = i % 5, y = Math.floor(i / 5);
+    const here = x === px && y === py;
+    const cls = ['cell'];
+    if (t === 'fog') cls.push('fog');
+    if (t === '门' || t === '梯') cls.push('gate');
+    if (t === '妖') cls.push('block');
+    if (here) cls.push('here');
+    return `<div class="${cls.join(' ')}">${t === 'fog' ? '' : t}${here ? '<span class="me"></span>' : ''}</div>`;
+  }).join('');
+}
+
+function paint(k) {
+  const s = SCENES[k];
+  document.getElementById('stageBg').style.backgroundImage = `url('${s.bg}')`;
+  document.getElementById('stageBadge').textContent = s.badge;
+  document.getElementById('cast').innerHTML = s.cast
+    .map((c) => `<img class="${c.cls}" src="${c.src}" alt="">`).join('');
+  const tier = document.getElementById('tier');
+  tier.style.display = s.tier.show ? '' : 'none';
+  if (s.tier.show) {
+    document.getElementById('foeName').textContent = s.tier.name;
+    const pct = Math.round(s.tier.hp / s.tier.max * 100);
+    document.getElementById('foeHp').style.width = pct + '%';
+    document.getElementById('foeHpTxt').textContent = `${s.tier.hp}/${s.tier.max}`;
+  }
+  const np = document.getElementById('np');
+  np.textContent = s.np;
+  np.className = 'nameplate' + (s.mute ? ' mute' : '');
+  document.getElementById('dtext').innerHTML = s.text;
+  document.getElementById('acts').innerHTML = s.acts
+    .map((a, i) => `<button class="act ${a.cls || ''}" data-i="${i}">${a.t}${a.s ? `<small>${a.s}</small>` : ''}</button>`)
+    .join('');
+  const night = k === 'night';
+  const chip = document.getElementById('chipDay');
+  chip.textContent = night ? '☾ 夜晚 · 守阁' : '☀ 白天 · 拾物';
+  chip.className = 'chip ' + (night ? 'night' : 'day');
+}
+
+const urlScene = new URLSearchParams(location.search).get('scene');
+const start = SCENES[urlScene] ? urlScene : 'foe';
+document.querySelectorAll('[data-scene]').forEach((b) => {
+  b.onclick = () => {
+    document.querySelectorAll('[data-scene]').forEach((x) => x.classList.remove('on'));
+    b.classList.add('on');
+    paint(b.dataset.scene);
+  };
+});
+
+document.getElementById('acts').addEventListener('click', (e) => {
+  const b = e.target.closest('.act');
+  if (!b) return;
+  document.getElementById('dtext').innerHTML =
+    '（样板）这一步真实发生时，旁白会换一段、角色会有反应，`S.busy` 期间按钮锁住。';
+});
+
+buildMaze(2, 3);
+document.querySelector(`[data-scene="${start}"]`)?.classList.add('on');
+document.querySelectorAll('[data-scene]').forEach((x) => { if (x.dataset.scene !== start) x.classList.remove('on'); });
+paint(start);
+</script>
+</body>
+</html>

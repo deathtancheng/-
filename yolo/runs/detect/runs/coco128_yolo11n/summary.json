@@ -1,0 +1,11 @@
+{
+  "model": "yolo11n.pt",
+  "data": "coco128.yaml",
+  "epochs": 30,
+  "batch": 8,
+  "imgsz": 640,
+  "map50": 0.7878,
+  "map50_95": 0.6121,
+  "best_weights": "C:\\Users\\Admin（无密码）\\WorkBuddy\\2026-09-29-22-32-37\\local-ai-lab\\yolo\\runs\\detect\\runs\\coco128_yolo11n\\weights\\best.pt",
+  "save_dir": "C:\\Users\\Admin（无密码）\\WorkBuddy\\2026-09-29-22-32-37\\local-ai-lab\\yolo\\runs\\detect\\runs\\coco128_yolo11n"
+}

@@ -1,0 +1,6 @@
+[engine] ultralytics | best.pt
+
+  摄像头检测服务 → http://127.0.0.1:5179
+  实时流: /video    快照: /snapshot    检测: /detect    状态: /stats
+  状态: 就绪
+
